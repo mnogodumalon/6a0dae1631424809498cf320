@@ -1,0 +1,12 @@
+- Mitarbeiterverwaltung (mitarbeiterverwaltung): nachname[string/text], position[lookup/select], email[string/email], telefon[string/tel], eintrittsdatum[date/date], notizen_ma[string/textarea], vorname[string/text]
+- Kundenverwaltung (kundenverwaltung): kunde_vorname[string/text], kunde_nachname[string/text], firmenname[string/text], kunde_email[string/email], kunde_telefon[string/tel], strasse[string/text], hausnummer[string/text], plz[string/text], ort[string/text], kundenkategorie[lookup/select], notizen_kunde[string/textarea]
+- Motivkatalog (motivkatalog): motivname[string/text], motiv_beschreibung[string/textarea], kategorie[lookup/select], standardbreite_cm[number], standardhoehe_cm[number], preis_pro_qm[number], vorschaubild[file], motiv_aktiv[bool]
+- Materialverwaltung (materialverwaltung): materialname[string/text], materialtyp[lookup/select], einheit[lookup/select], aktueller_bestand[number], mindestbestand[number], preis_pro_einheit[number], lieferant[string/text], notizen_material[string/textarea]
+- Auftragsverwaltung (auftragsverwaltung): auftragsnummer[string/text], auftragsdatum[date/date], status[lookup/select], kunde[applookup/select], mitarbeiter[applookup/select], motiv[applookup/select], druckbreite_cm[number], druckhoehe_cm[number], materialien[multipleapplookup/select], wunschtermin[date/date], lieferart[lookup/select], liefer_strasse[string/text], liefer_hausnummer[string/text], liefer_plz[string/text], liefer_ort[string/text], sonderanforderungen[string/textarea], interne_notizen[string/textarea]
+  → kunde links to app_id 6a0dae164ce97ad2bb16007c
+  → mitarbeiter links to app_id 6a0dae172be9236c3fd29363
+  → motiv links to app_id 6a0dae1749104149e0dc102c
+  → materialien links to app_id 6a0dae176d50aa818bb08078
+- Rechnungsverwaltung (rechnungsverwaltung): rechnungsnummer[string/text], rechnungsdatum[date/date], faelligkeitsdatum[date/date], auftrag[applookup/select], rechnungskunde[applookup/select], nettobetrag[number], mehrwertsteuersatz[lookup/select], gesamtbetrag[number], zahlungsart[lookup/select], zahlungsstatus[lookup/select], rechnungsnotiz[string/textarea], rechnungsdokument[file]
+  → auftrag links to app_id 6a0dae164a2e630e44db32c5
+  → rechnungskunde links to app_id 6a0dae164ce97ad2bb16007c

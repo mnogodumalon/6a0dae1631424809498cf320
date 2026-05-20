@@ -1,0 +1,74 @@
+{
+  "MitarbeiterverwaltungDialog.tsx": {
+    "nachname": "z. B. Müller",
+    "vorname": "z. B. Hans",
+    "position": "Position auswählen",
+    "email": "z. B. hans@example.com",
+    "eintrittsdatum": "Eintrittsdatum wählen",
+    "notizen_ma": "Besonderheiten, Qualifikationen..."
+  },
+  "KundenverwaltungDialog.tsx": {
+    "kunde_vorname": "z. B. Anna",
+    "kunde_nachname": "z. B. Schmidt",
+    "firmenname": "z. B. Müller GmbH",
+    "kunde_email": "z. B. anna@example.com",
+    "kunde_telefon": "z. B. 030 12345678",
+    "strasse": "z. B. Hauptstraße",
+    "hausnummer": "z. B. 42",
+    "plz": "z. B. 10115",
+    "ort": "z. B. Berlin",
+    "kundenkategorie": "Privatkundenkategorie auswählen",
+    "notizen_kunde": "Zahlungsart, Besonderheiten..."
+  },
+  "MotivkatalogDialog.tsx": {
+    "motivname": "z. B. Berliner Stadtpanorama",
+    "motiv_beschreibung": "Farben, Stil, Inspirationen...",
+    "kategorie": "Motivkategorie auswählen",
+    "standardbreite_cm": "z. B. 80",
+    "standardhoehe_cm": "z. B. 60",
+    "preis_pro_qm": "z. B. 12,50",
+    "motiv_aktiv": "Im Verkauf aktiv?"
+  },
+  "MaterialverwaltungDialog.tsx": {
+    "materialname": "z. B. Druckfarbe Cyan",
+    "materialtyp": "Materialtyp auswählen",
+    "einheit": "Einheit auswählen",
+    "aktueller_bestand": "z. B. 25",
+    "mindestbestand": "z. B. 5",
+    "preis_pro_einheit": "z. B. 45,99",
+    "lieferant": "z. B. Farbwerke GmbH",
+    "notizen_material": "Lagerfach, Besonderheiten..."
+  },
+  "AuftragsverwaltungDialog.tsx": {
+    "auftragsnummer": "z. B. AU-2026-0042",
+    "auftragsdatum": "Wann wurde der Auftrag aufgegeben?",
+    "status": "Aktuellen Status wählen",
+    "kunde": "Kunden wählen",
+    "mitarbeiter": "Zuständigen Mitarbeiter wählen",
+    "motiv": "Druckmotiv aus Katalog wählen",
+    "druckbreite_cm": "z. B. 100",
+    "druckhoehe_cm": "z. B. 75",
+    "materialien": "Verwendete Materialien wählen",
+    "wunschtermin": "Gewünschtes Fertigdatum?",
+    "lieferart": "Lieferart auswählen",
+    "liefer_strasse": "z. B. Poststraße",
+    "liefer_hausnummer": "z. B. 15",
+    "liefer_plz": "z. B. 10115",
+    "liefer_ort": "z. B. Berlin",
+    "sonderanforderungen": "Rahmen, Veredelung, Montage...",
+    "interne_notizen": "Für das Team, nicht auf Rechnung..."
+  },
+  "RechnungsverwaltungDialog.tsx": {
+    "rechnungsnummer": "z. B. RG-2026-0042",
+    "rechnungsdatum": "Wann wurde die Rechnung ausgestellt?",
+    "faelligkeitsdatum": "Zahlbar bis wann?",
+    "auftrag": "Auftrag zuordnen",
+    "rechnungskunde": "Rechnungsempfänger wählen",
+    "nettobetrag": "z. B. 1250,00",
+    "mehrwertsteuersatz": "Steuersatz wählen",
+    "gesamtbetrag": "wird automatisch berechnet",
+    "zahlungsart": "Zahlungsart auswählen",
+    "zahlungsstatus": "Zahlungsstatus wählen",
+    "rechnungsnotiz": "Zahlungsbedingungen, Dank..."
+  }
+}
