@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import type { ComputedContext } from '@/config/form-enhancements/types';
 import { applyFieldOrder, flattenFieldOrder, applyDefaults, evalComputed, numberInputProps, clampNumberValue, classifyComputed, extractApplookupRefs, mergeApplookupRefs, resolveApplookupRef } from '@/config/form-enhancements/types';
 import { formEnhancements, computedDeps, computedApplookupRefs } from '@/config/form-enhancements/Motivkatalog';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select, SelectContent, SelectItem,
@@ -27,13 +28,26 @@ interface MotivkatalogDialogProps {
   onClose: () => void;
   onSubmit: (fields: Motivkatalog['fields']) => Promise<void>;
   defaultValues?: Motivkatalog['fields'];
+  /** Record id when editing — enables the attachments section. Omit on create. */
+  recordId?: string;
   enablePhotoScan?: boolean;
   enablePhotoLocation?: boolean;
 }
 
-export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, enablePhotoScan = true, enablePhotoLocation = true }: MotivkatalogDialogProps) {
+export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, recordId, enablePhotoScan = true, enablePhotoLocation = true }: MotivkatalogDialogProps) {
   const [fields, setFields] = useState<Partial<Motivkatalog['fields']>>({});
   const [saving, setSaving] = useState(false);
+  // Dirty-tracking: in edit-mode the Speichern button is disabled until the
+  // user actually changes something. JSON.stringify is good enough for our
+  // fields (plain values + LookupValue objects + string arrays).
+  const isDirty = useMemo(() => {
+    if (!defaultValues) return true;  // create-mode: always allow submit
+    try {
+      return JSON.stringify(fields) !== JSON.stringify(defaultValues);
+    } catch {
+      return true;
+    }
+  }, [fields, defaultValues]);
   const [aiOpen, setAiOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
@@ -243,7 +257,7 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
         <Label htmlFor="motivname">Motivname</Label>
         <Input
           id="motivname"
-          placeholder="z. B. Berliner Stadtpanorama"
+          placeholder=""
           value={fields.motivname ?? ''}
           onChange={e => setFields(f => ({ ...f, motivname: e.target.value }))}
         />
@@ -254,7 +268,7 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
         <Label htmlFor="motiv_beschreibung">Beschreibung</Label>
         <Textarea
           id="motiv_beschreibung"
-          placeholder="Farben, Stil, Inspirationen..."
+          placeholder=""
           value={fields.motiv_beschreibung ?? ''}
           onChange={e => setFields(f => ({ ...f, motiv_beschreibung: e.target.value }))}
           rows={3}
@@ -268,7 +282,7 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
           value={lookupKey(fields.kategorie) ?? ''}
           onValueChange={v => setFields(f => ({ ...f, kategorie: v === 'none' ? undefined : v as any }))}
         >
-          <SelectTrigger id="kategorie"><SelectValue placeholder="Motivkategorie auswählen" /></SelectTrigger>
+          <SelectTrigger id="kategorie"><SelectValue placeholder="" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="none">—</SelectItem>
             <SelectItem value="stadtansichten">Stadtansichten</SelectItem>
@@ -291,7 +305,7 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'standardbreite_cm')}
-          placeholder="z. B. 80"
+          placeholder=""
           value={fields.standardbreite_cm !== undefined ? fields.standardbreite_cm : (computedValues['standardbreite_cm'] ?? '')}
           onChange={e => setFields(f => ({ ...f, standardbreite_cm: clampNumberValue(formEnhancements, 'standardbreite_cm', e.target.value) }))}
         />
@@ -305,7 +319,7 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'standardhoehe_cm')}
-          placeholder="z. B. 60"
+          placeholder=""
           value={fields.standardhoehe_cm !== undefined ? fields.standardhoehe_cm : (computedValues['standardhoehe_cm'] ?? '')}
           onChange={e => setFields(f => ({ ...f, standardhoehe_cm: clampNumberValue(formEnhancements, 'standardhoehe_cm', e.target.value) }))}
         />
@@ -319,7 +333,7 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'preis_pro_qm')}
-          placeholder="z. B. 12,50"
+          placeholder=""
           value={fields.preis_pro_qm !== undefined ? fields.preis_pro_qm : (computedValues['preis_pro_qm'] ?? '')}
           onChange={e => setFields(f => ({ ...f, preis_pro_qm: clampNumberValue(formEnhancements, 'preis_pro_qm', e.target.value) }))}
         />
@@ -762,12 +776,17 @@ export function MotivkatalogDialog({ open, onClose, onSubmit, defaultValues, ena
                 })()}
               </div>
             )}
+            {recordId && (
+              <div className="pt-2 border-t border-border">
+                <AttachmentsSection appId={APP_IDS.MOTIVKATALOG} recordId={recordId} />
+              </div>
+            )}
           </div>
           <DialogFooter className="sticky bottom-0 border-t bg-background/95 backdrop-blur px-6 py-3 gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
             <Button
               type="submit"
-              disabled={saving}
+              disabled={saving || !isDirty}
             >
               {saving ? 'Speichern...' : defaultValues ? 'Speichern' : 'Erstellen'}
             </Button>

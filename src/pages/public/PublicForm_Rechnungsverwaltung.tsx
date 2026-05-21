@@ -171,19 +171,6 @@ export default function PublicFormRechnungsverwaltung() {
               <button
                 type="button"
                 role="radio"
-                aria-checked={lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'}
-                onClick={() => setFields(f => ({ ...f, mehrwertsteuersatz: (lookupKey(f.mehrwertsteuersatz) === 'mwst_19' ? undefined : 'mwst_19') as any }))}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                  lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'
-                    ? 'bg-foreground text-background border-foreground'
-                    : 'bg-background text-foreground border-input hover:bg-accent'
-                }`}
-              >
-                19 %
-              </button>
-              <button
-                type="button"
-                role="radio"
                 aria-checked={lookupKey(fields.mehrwertsteuersatz) === 'mwst_7'}
                 onClick={() => setFields(f => ({ ...f, mehrwertsteuersatz: (lookupKey(f.mehrwertsteuersatz) === 'mwst_7' ? undefined : 'mwst_7') as any }))}
                 className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -206,6 +193,19 @@ export default function PublicFormRechnungsverwaltung() {
                 }`}
               >
                 0 % (steuerfrei)
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'}
+                onClick={() => setFields(f => ({ ...f, mehrwertsteuersatz: (lookupKey(f.mehrwertsteuersatz) === 'mwst_19' ? undefined : 'mwst_19') as any }))}
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
+                }`}
+              >
+                19 %
               </button>
             </div>
           </div>

@@ -5,10 +5,8 @@
 import type { FormEnhancements } from './types';
 
 export const formEnhancements: FormEnhancements = {
-  fieldOrder: ['vorname', 'nachname', 'position', 'email', 'eintrittsdatum', 'notizen_ma'],
-  defaults: {
-    'eintrittsdatum': { kind: 'today' },
-  },
+  fieldOrder: null,
+  defaults: {},
   computed: {},
 };
 

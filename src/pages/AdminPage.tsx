@@ -1,19 +1,19 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import type { Mitarbeiterverwaltung, Kundenverwaltung, Motivkatalog, Materialverwaltung, Auftragsverwaltung, Rechnungsverwaltung } from '@/types/app';
+import type { Rechnungsverwaltung, Auftragsverwaltung, Kundenverwaltung, Mitarbeiterverwaltung, Motivkatalog, Materialverwaltung } from '@/types/app';
 import { LivingAppsService, extractRecordId, cleanFieldsForApi } from '@/services/livingAppsService';
-import { MitarbeiterverwaltungDialog } from '@/components/dialogs/MitarbeiterverwaltungDialog';
-import { MitarbeiterverwaltungViewDialog } from '@/components/dialogs/MitarbeiterverwaltungViewDialog';
+import { RechnungsverwaltungDialog } from '@/components/dialogs/RechnungsverwaltungDialog';
+import { RechnungsverwaltungViewDialog } from '@/components/dialogs/RechnungsverwaltungViewDialog';
+import { AuftragsverwaltungDialog } from '@/components/dialogs/AuftragsverwaltungDialog';
+import { AuftragsverwaltungViewDialog } from '@/components/dialogs/AuftragsverwaltungViewDialog';
 import { KundenverwaltungDialog } from '@/components/dialogs/KundenverwaltungDialog';
 import { KundenverwaltungViewDialog } from '@/components/dialogs/KundenverwaltungViewDialog';
+import { MitarbeiterverwaltungDialog } from '@/components/dialogs/MitarbeiterverwaltungDialog';
+import { MitarbeiterverwaltungViewDialog } from '@/components/dialogs/MitarbeiterverwaltungViewDialog';
 import { MotivkatalogDialog } from '@/components/dialogs/MotivkatalogDialog';
 import { MotivkatalogViewDialog } from '@/components/dialogs/MotivkatalogViewDialog';
 import { MaterialverwaltungDialog } from '@/components/dialogs/MaterialverwaltungDialog';
 import { MaterialverwaltungViewDialog } from '@/components/dialogs/MaterialverwaltungViewDialog';
-import { AuftragsverwaltungDialog } from '@/components/dialogs/AuftragsverwaltungDialog';
-import { AuftragsverwaltungViewDialog } from '@/components/dialogs/AuftragsverwaltungViewDialog';
-import { RechnungsverwaltungDialog } from '@/components/dialogs/RechnungsverwaltungDialog';
-import { RechnungsverwaltungViewDialog } from '@/components/dialogs/RechnungsverwaltungViewDialog';
 import { BulkEditDialog } from '@/components/dialogs/BulkEditDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageShell } from '@/components/PageShell';
@@ -40,14 +40,38 @@ function fmtDate(d?: string) {
 }
 
 // Field metadata per entity for bulk edit and column filters
-const MITARBEITERVERWALTUNG_FIELDS = [
-  { key: 'nachname', label: 'Nachname', type: 'string/text' },
-  { key: 'position', label: 'Position', type: 'lookup/select', options: [{ key: 'geschaeftsfuehrung', label: 'Geschäftsführung' }, { key: 'drucktechniker', label: 'Drucktechniker' }, { key: 'grafikdesigner', label: 'Grafikdesigner' }, { key: 'vertrieb', label: 'Vertrieb' }, { key: 'lager_logistik', label: 'Lager & Logistik' }, { key: 'buchhaltung', label: 'Buchhaltung' }, { key: 'sonstiges', label: 'Sonstiges' }] },
-  { key: 'email', label: 'E-Mail-Adresse', type: 'string/email' },
-  { key: 'telefon', label: 'Telefonnummer', type: 'string/tel' },
-  { key: 'eintrittsdatum', label: 'Eintrittsdatum', type: 'date/date' },
-  { key: 'notizen_ma', label: 'Notizen', type: 'string/textarea' },
-  { key: 'vorname', label: 'Vorname', type: 'string/text' },
+const RECHNUNGSVERWALTUNG_FIELDS = [
+  { key: 'rechnungsnummer', label: 'Rechnungsnummer', type: 'string/text' },
+  { key: 'rechnungsdatum', label: 'Rechnungsdatum', type: 'date/date' },
+  { key: 'faelligkeitsdatum', label: 'Fälligkeitsdatum', type: 'date/date' },
+  { key: 'auftrag', label: 'Zugehöriger Auftrag', type: 'applookup/select', targetEntity: 'auftragsverwaltung', targetAppId: 'AUFTRAGSVERWALTUNG', displayField: 'auftragsnummer' },
+  { key: 'rechnungskunde', label: 'Rechnungsempfänger', type: 'applookup/select', targetEntity: 'kundenverwaltung', targetAppId: 'KUNDENVERWALTUNG', displayField: 'kunde_vorname' },
+  { key: 'nettobetrag', label: 'Nettobetrag (€)', type: 'number' },
+  { key: 'mehrwertsteuersatz', label: 'Mehrwertsteuersatz', type: 'lookup/select', options: [{ key: 'mwst_7', label: '7 %' }, { key: 'mwst_0', label: '0 % (steuerfrei)' }, { key: 'mwst_19', label: '19 %' }] },
+  { key: 'gesamtbetrag', label: 'Gesamtbetrag brutto (€)', type: 'number' },
+  { key: 'zahlungsart', label: 'Zahlungsart', type: 'lookup/select', options: [{ key: 'ueberweisung', label: 'Überweisung' }, { key: 'lastschrift', label: 'Lastschrift' }, { key: 'bar', label: 'Bar' }, { key: 'paypal', label: 'PayPal' }, { key: 'kreditkarte', label: 'Kreditkarte' }] },
+  { key: 'zahlungsstatus', label: 'Zahlungsstatus', type: 'lookup/select', options: [{ key: 'offen', label: 'Offen' }, { key: 'teilweise_bezahlt', label: 'Teilweise bezahlt' }, { key: 'bezahlt', label: 'Bezahlt' }, { key: 'ueberfaellig', label: 'Überfällig' }, { key: 'storniert_rechnung', label: 'Storniert' }] },
+  { key: 'rechnungsnotiz', label: 'Notiz auf der Rechnung', type: 'string/textarea' },
+  { key: 'rechnungsdokument', label: 'Rechnungsdokument (PDF)', type: 'file' },
+];
+const AUFTRAGSVERWALTUNG_FIELDS = [
+  { key: 'auftragsnummer', label: 'Auftragsnummer', type: 'string/text' },
+  { key: 'auftragsdatum', label: 'Auftragsdatum', type: 'date/date' },
+  { key: 'status', label: 'Auftragsstatus', type: 'lookup/select', options: [{ key: 'neu', label: 'Neu' }, { key: 'in_bearbeitung', label: 'In Bearbeitung' }, { key: 'druck_laeuft', label: 'Druck läuft' }, { key: 'qualitaetspruefung', label: 'Qualitätsprüfung' }, { key: 'versandbereit', label: 'Versandbereit' }, { key: 'abgeschlossen', label: 'Abgeschlossen' }, { key: 'storniert', label: 'Storniert' }] },
+  { key: 'kunde', label: 'Kunde', type: 'applookup/select', targetEntity: 'kundenverwaltung', targetAppId: 'KUNDENVERWALTUNG', displayField: 'kunde_vorname' },
+  { key: 'mitarbeiter', label: 'Zuständiger Mitarbeiter', type: 'applookup/select', targetEntity: 'mitarbeiterverwaltung', targetAppId: 'MITARBEITERVERWALTUNG', displayField: 'nachname' },
+  { key: 'motiv', label: 'Druckmotiv', type: 'applookup/select', targetEntity: 'motivkatalog', targetAppId: 'MOTIVKATALOG', displayField: 'motivname' },
+  { key: 'druckbreite_cm', label: 'Druckbreite (cm)', type: 'number' },
+  { key: 'druckhoehe_cm', label: 'Druckhöhe (cm)', type: 'number' },
+  { key: 'materialien', label: 'Verwendete Materialien', type: 'multipleapplookup/select', targetEntity: 'materialverwaltung', targetAppId: 'MATERIALVERWALTUNG', displayField: 'materialname' },
+  { key: 'wunschtermin', label: 'Wunschtermin', type: 'date/date' },
+  { key: 'lieferart', label: 'Lieferart', type: 'lookup/select', options: [{ key: 'selbstabholung', label: 'Selbstabholung' }, { key: 'versand', label: 'Versand' }, { key: 'montage_vor_ort', label: 'Montage vor Ort' }] },
+  { key: 'liefer_strasse', label: 'Lieferstraße', type: 'string/text' },
+  { key: 'liefer_hausnummer', label: 'Lieferhausnummer', type: 'string/text' },
+  { key: 'liefer_plz', label: 'Liefer-PLZ', type: 'string/text' },
+  { key: 'liefer_ort', label: 'Lieferort', type: 'string/text' },
+  { key: 'sonderanforderungen', label: 'Sonderanforderungen', type: 'string/textarea' },
+  { key: 'interne_notizen', label: 'Interne Notizen', type: 'string/textarea' },
 ];
 const KUNDENVERWALTUNG_FIELDS = [
   { key: 'kunde_vorname', label: 'Vorname', type: 'string/text' },
@@ -61,6 +85,15 @@ const KUNDENVERWALTUNG_FIELDS = [
   { key: 'ort', label: 'Stadt', type: 'string/text' },
   { key: 'kundenkategorie', label: 'Kundenkategorie', type: 'lookup/select', options: [{ key: 'privatkunde', label: 'Privatkunde' }, { key: 'geschaeftskunde', label: 'Geschäftskunde' }, { key: 'wiederverkaeufer', label: 'Wiederverkäufer' }] },
   { key: 'notizen_kunde', label: 'Notizen', type: 'string/textarea' },
+];
+const MITARBEITERVERWALTUNG_FIELDS = [
+  { key: 'nachname', label: 'Nachname', type: 'string/text' },
+  { key: 'position', label: 'Position', type: 'lookup/select', options: [{ key: 'geschaeftsfuehrung', label: 'Geschäftsführung' }, { key: 'drucktechniker', label: 'Drucktechniker' }, { key: 'grafikdesigner', label: 'Grafikdesigner' }, { key: 'vertrieb', label: 'Vertrieb' }, { key: 'lager_logistik', label: 'Lager & Logistik' }, { key: 'buchhaltung', label: 'Buchhaltung' }, { key: 'sonstiges', label: 'Sonstiges' }] },
+  { key: 'email', label: 'E-Mail-Adresse', type: 'string/email' },
+  { key: 'telefon', label: 'Telefonnummer', type: 'string/tel' },
+  { key: 'eintrittsdatum', label: 'Eintrittsdatum', type: 'date/date' },
+  { key: 'notizen_ma', label: 'Notizen', type: 'string/textarea' },
+  { key: 'vorname', label: 'Vorname', type: 'string/text' },
 ];
 const MOTIVKATALOG_FIELDS = [
   { key: 'motivname', label: 'Motivname', type: 'string/text' },
@@ -82,47 +115,14 @@ const MATERIALVERWALTUNG_FIELDS = [
   { key: 'lieferant', label: 'Lieferant', type: 'string/text' },
   { key: 'notizen_material', label: 'Notizen', type: 'string/textarea' },
 ];
-const AUFTRAGSVERWALTUNG_FIELDS = [
-  { key: 'auftragsnummer', label: 'Auftragsnummer', type: 'string/text' },
-  { key: 'auftragsdatum', label: 'Auftragsdatum', type: 'date/date' },
-  { key: 'status', label: 'Auftragsstatus', type: 'lookup/select', options: [{ key: 'neu', label: 'Neu' }, { key: 'in_bearbeitung', label: 'In Bearbeitung' }, { key: 'druck_laeuft', label: 'Druck läuft' }, { key: 'qualitaetspruefung', label: 'Qualitätsprüfung' }, { key: 'versandbereit', label: 'Versandbereit' }, { key: 'abgeschlossen', label: 'Abgeschlossen' }, { key: 'storniert', label: 'Storniert' }] },
-  { key: 'kunde', label: 'Kunde', type: 'applookup/select', targetEntity: 'kundenverwaltung', targetAppId: 'KUNDENVERWALTUNG', displayField: 'kunde_vorname' },
-  { key: 'mitarbeiter', label: 'Zuständiger Mitarbeiter', type: 'applookup/select', targetEntity: 'mitarbeiterverwaltung', targetAppId: 'MITARBEITERVERWALTUNG', displayField: 'nachname' },
-  { key: 'motiv', label: 'Druckmotiv', type: 'applookup/select', targetEntity: 'motivkatalog', targetAppId: 'MOTIVKATALOG', displayField: 'motivname' },
-  { key: 'druckbreite_cm', label: 'Druckbreite (cm)', type: 'number' },
-  { key: 'druckhoehe_cm', label: 'Druckhöhe (cm)', type: 'number' },
-  { key: 'materialien', label: 'Verwendete Materialien', type: 'multipleapplookup/select', targetEntity: 'materialverwaltung', targetAppId: 'MATERIALVERWALTUNG', displayField: 'materialname' },
-  { key: 'wunschtermin', label: 'Wunschtermin', type: 'date/date' },
-  { key: 'lieferart', label: 'Lieferart', type: 'lookup/select', options: [{ key: 'selbstabholung', label: 'Selbstabholung' }, { key: 'versand', label: 'Versand' }, { key: 'montage_vor_ort', label: 'Montage vor Ort' }] },
-  { key: 'liefer_strasse', label: 'Lieferstraße', type: 'string/text' },
-  { key: 'liefer_hausnummer', label: 'Lieferhausnummer', type: 'string/text' },
-  { key: 'liefer_plz', label: 'Liefer-PLZ', type: 'string/text' },
-  { key: 'liefer_ort', label: 'Lieferort', type: 'string/text' },
-  { key: 'sonderanforderungen', label: 'Sonderanforderungen', type: 'string/textarea' },
-  { key: 'interne_notizen', label: 'Interne Notizen', type: 'string/textarea' },
-];
-const RECHNUNGSVERWALTUNG_FIELDS = [
-  { key: 'rechnungsnummer', label: 'Rechnungsnummer', type: 'string/text' },
-  { key: 'rechnungsdatum', label: 'Rechnungsdatum', type: 'date/date' },
-  { key: 'faelligkeitsdatum', label: 'Fälligkeitsdatum', type: 'date/date' },
-  { key: 'auftrag', label: 'Zugehöriger Auftrag', type: 'applookup/select', targetEntity: 'auftragsverwaltung', targetAppId: 'AUFTRAGSVERWALTUNG', displayField: 'auftragsnummer' },
-  { key: 'rechnungskunde', label: 'Rechnungsempfänger', type: 'applookup/select', targetEntity: 'kundenverwaltung', targetAppId: 'KUNDENVERWALTUNG', displayField: 'kunde_vorname' },
-  { key: 'nettobetrag', label: 'Nettobetrag (€)', type: 'number' },
-  { key: 'mehrwertsteuersatz', label: 'Mehrwertsteuersatz', type: 'lookup/select', options: [{ key: 'mwst_19', label: '19 %' }, { key: 'mwst_7', label: '7 %' }, { key: 'mwst_0', label: '0 % (steuerfrei)' }] },
-  { key: 'gesamtbetrag', label: 'Gesamtbetrag brutto (€)', type: 'number' },
-  { key: 'zahlungsart', label: 'Zahlungsart', type: 'lookup/select', options: [{ key: 'ueberweisung', label: 'Überweisung' }, { key: 'lastschrift', label: 'Lastschrift' }, { key: 'bar', label: 'Bar' }, { key: 'paypal', label: 'PayPal' }, { key: 'kreditkarte', label: 'Kreditkarte' }] },
-  { key: 'zahlungsstatus', label: 'Zahlungsstatus', type: 'lookup/select', options: [{ key: 'offen', label: 'Offen' }, { key: 'teilweise_bezahlt', label: 'Teilweise bezahlt' }, { key: 'bezahlt', label: 'Bezahlt' }, { key: 'ueberfaellig', label: 'Überfällig' }, { key: 'storniert_rechnung', label: 'Storniert' }] },
-  { key: 'rechnungsnotiz', label: 'Notiz auf der Rechnung', type: 'string/textarea' },
-  { key: 'rechnungsdokument', label: 'Rechnungsdokument (PDF)', type: 'file' },
-];
 
 const ENTITY_TABS = [
-  { key: 'mitarbeiterverwaltung', label: 'Mitarbeiterverwaltung', pascal: 'Mitarbeiterverwaltung' },
+  { key: 'rechnungsverwaltung', label: 'Rechnungsverwaltung', pascal: 'Rechnungsverwaltung' },
+  { key: 'auftragsverwaltung', label: 'Auftragsverwaltung', pascal: 'Auftragsverwaltung' },
   { key: 'kundenverwaltung', label: 'Kundenverwaltung', pascal: 'Kundenverwaltung' },
+  { key: 'mitarbeiterverwaltung', label: 'Mitarbeiterverwaltung', pascal: 'Mitarbeiterverwaltung' },
   { key: 'motivkatalog', label: 'Motivkatalog', pascal: 'Motivkatalog' },
   { key: 'materialverwaltung', label: 'Materialverwaltung', pascal: 'Materialverwaltung' },
-  { key: 'auftragsverwaltung', label: 'Auftragsverwaltung', pascal: 'Auftragsverwaltung' },
-  { key: 'rechnungsverwaltung', label: 'Rechnungsverwaltung', pascal: 'Rechnungsverwaltung' },
 ] as const;
 
 type EntityKey = typeof ENTITY_TABS[number]['key'];
@@ -131,22 +131,22 @@ export default function AdminPage() {
   const data = useDashboardData();
   const { loading, error, fetchAll } = data;
 
-  const [activeTab, setActiveTab] = useState<EntityKey>('mitarbeiterverwaltung');
+  const [activeTab, setActiveTab] = useState<EntityKey>('rechnungsverwaltung');
   const [selectedIds, setSelectedIds] = useState<Record<EntityKey, Set<string>>>(() => ({
-    'mitarbeiterverwaltung': new Set(),
+    'rechnungsverwaltung': new Set(),
+    'auftragsverwaltung': new Set(),
     'kundenverwaltung': new Set(),
+    'mitarbeiterverwaltung': new Set(),
     'motivkatalog': new Set(),
     'materialverwaltung': new Set(),
-    'auftragsverwaltung': new Set(),
-    'rechnungsverwaltung': new Set(),
   }));
   const [filters, setFilters] = useState<Record<EntityKey, Record<string, string>>>(() => ({
-    'mitarbeiterverwaltung': {},
+    'rechnungsverwaltung': {},
+    'auftragsverwaltung': {},
     'kundenverwaltung': {},
+    'mitarbeiterverwaltung': {},
     'motivkatalog': {},
     'materialverwaltung': {},
-    'auftragsverwaltung': {},
-    'rechnungsverwaltung': {},
   }));
   const [showFilters, setShowFilters] = useState(false);
   const [dialogState, setDialogState] = useState<{ entity: EntityKey; record: any } | null>(null);
@@ -161,12 +161,12 @@ export default function AdminPage() {
 
   const getRecords = useCallback((entity: EntityKey) => {
     switch (entity) {
-      case 'mitarbeiterverwaltung': return (data as any).mitarbeiterverwaltung as Mitarbeiterverwaltung[] ?? [];
+      case 'rechnungsverwaltung': return (data as any).rechnungsverwaltung as Rechnungsverwaltung[] ?? [];
+      case 'auftragsverwaltung': return (data as any).auftragsverwaltung as Auftragsverwaltung[] ?? [];
       case 'kundenverwaltung': return (data as any).kundenverwaltung as Kundenverwaltung[] ?? [];
+      case 'mitarbeiterverwaltung': return (data as any).mitarbeiterverwaltung as Mitarbeiterverwaltung[] ?? [];
       case 'motivkatalog': return (data as any).motivkatalog as Motivkatalog[] ?? [];
       case 'materialverwaltung': return (data as any).materialverwaltung as Materialverwaltung[] ?? [];
-      case 'auftragsverwaltung': return (data as any).auftragsverwaltung as Auftragsverwaltung[] ?? [];
-      case 'rechnungsverwaltung': return (data as any).rechnungsverwaltung as Rechnungsverwaltung[] ?? [];
       default: return [];
     }
   }, [data]);
@@ -174,15 +174,15 @@ export default function AdminPage() {
   const getLookupLists = useCallback((entity: EntityKey) => {
     const lists: Record<string, any[]> = {};
     switch (entity) {
+      case 'rechnungsverwaltung':
+        lists.auftragsverwaltungList = (data as any).auftragsverwaltung ?? [];
+        lists.kundenverwaltungList = (data as any).kundenverwaltung ?? [];
+        break;
       case 'auftragsverwaltung':
         lists.kundenverwaltungList = (data as any).kundenverwaltung ?? [];
         lists.mitarbeiterverwaltungList = (data as any).mitarbeiterverwaltung ?? [];
         lists.motivkatalogList = (data as any).motivkatalog ?? [];
         lists.materialverwaltungList = (data as any).materialverwaltung ?? [];
-        break;
-      case 'rechnungsverwaltung':
-        lists.auftragsverwaltungList = (data as any).auftragsverwaltung ?? [];
-        lists.kundenverwaltungList = (data as any).kundenverwaltung ?? [];
         break;
     }
     return lists;
@@ -194,6 +194,14 @@ export default function AdminPage() {
     if (!id) return '—';
     const lists = getLookupLists(entity);
     void fieldKey; // ensure used for noUnusedParameters
+    if (entity === 'rechnungsverwaltung' && fieldKey === 'auftrag') {
+      const match = (lists.auftragsverwaltungList ?? []).find((r: any) => r.record_id === id);
+      return match?.fields.auftragsnummer ?? '—';
+    }
+    if (entity === 'rechnungsverwaltung' && fieldKey === 'rechnungskunde') {
+      const match = (lists.kundenverwaltungList ?? []).find((r: any) => r.record_id === id);
+      return match?.fields.kunde_vorname ?? '—';
+    }
     if (entity === 'auftragsverwaltung' && fieldKey === 'kunde') {
       const match = (lists.kundenverwaltungList ?? []).find((r: any) => r.record_id === id);
       return match?.fields.kunde_vorname ?? '—';
@@ -210,25 +218,17 @@ export default function AdminPage() {
       const match = (lists.materialverwaltungList ?? []).find((r: any) => r.record_id === id);
       return match?.fields.materialname ?? '—';
     }
-    if (entity === 'rechnungsverwaltung' && fieldKey === 'auftrag') {
-      const match = (lists.auftragsverwaltungList ?? []).find((r: any) => r.record_id === id);
-      return match?.fields.auftragsnummer ?? '—';
-    }
-    if (entity === 'rechnungsverwaltung' && fieldKey === 'rechnungskunde') {
-      const match = (lists.kundenverwaltungList ?? []).find((r: any) => r.record_id === id);
-      return match?.fields.kunde_vorname ?? '—';
-    }
     return String(url);
   }, [getLookupLists]);
 
   const getFieldMeta = useCallback((entity: EntityKey) => {
     switch (entity) {
-      case 'mitarbeiterverwaltung': return MITARBEITERVERWALTUNG_FIELDS;
+      case 'rechnungsverwaltung': return RECHNUNGSVERWALTUNG_FIELDS;
+      case 'auftragsverwaltung': return AUFTRAGSVERWALTUNG_FIELDS;
       case 'kundenverwaltung': return KUNDENVERWALTUNG_FIELDS;
+      case 'mitarbeiterverwaltung': return MITARBEITERVERWALTUNG_FIELDS;
       case 'motivkatalog': return MOTIVKATALOG_FIELDS;
       case 'materialverwaltung': return MATERIALVERWALTUNG_FIELDS;
-      case 'auftragsverwaltung': return AUFTRAGSVERWALTUNG_FIELDS;
-      case 'rechnungsverwaltung': return RECHNUNGSVERWALTUNG_FIELDS;
       default: return [];
     }
   }, []);
@@ -323,15 +323,25 @@ export default function AdminPage() {
 
   const getServiceMethods = useCallback((entity: EntityKey) => {
     switch (entity) {
-      case 'mitarbeiterverwaltung': return {
-        create: (fields: any) => LivingAppsService.createMitarbeiterverwaltungEntry(fields),
-        update: (id: string, fields: any) => LivingAppsService.updateMitarbeiterverwaltungEntry(id, fields),
-        remove: (id: string) => LivingAppsService.deleteMitarbeiterverwaltungEntry(id),
+      case 'rechnungsverwaltung': return {
+        create: (fields: any) => LivingAppsService.createRechnungsverwaltungEntry(fields),
+        update: (id: string, fields: any) => LivingAppsService.updateRechnungsverwaltungEntry(id, fields),
+        remove: (id: string) => LivingAppsService.deleteRechnungsverwaltungEntry(id),
+      };
+      case 'auftragsverwaltung': return {
+        create: (fields: any) => LivingAppsService.createAuftragsverwaltungEntry(fields),
+        update: (id: string, fields: any) => LivingAppsService.updateAuftragsverwaltungEntry(id, fields),
+        remove: (id: string) => LivingAppsService.deleteAuftragsverwaltungEntry(id),
       };
       case 'kundenverwaltung': return {
         create: (fields: any) => LivingAppsService.createKundenverwaltungEntry(fields),
         update: (id: string, fields: any) => LivingAppsService.updateKundenverwaltungEntry(id, fields),
         remove: (id: string) => LivingAppsService.deleteKundenverwaltungEntry(id),
+      };
+      case 'mitarbeiterverwaltung': return {
+        create: (fields: any) => LivingAppsService.createMitarbeiterverwaltungEntry(fields),
+        update: (id: string, fields: any) => LivingAppsService.updateMitarbeiterverwaltungEntry(id, fields),
+        remove: (id: string) => LivingAppsService.deleteMitarbeiterverwaltungEntry(id),
       };
       case 'motivkatalog': return {
         create: (fields: any) => LivingAppsService.createMotivkatalogEntry(fields),
@@ -342,16 +352,6 @@ export default function AdminPage() {
         create: (fields: any) => LivingAppsService.createMaterialverwaltungEntry(fields),
         update: (id: string, fields: any) => LivingAppsService.updateMaterialverwaltungEntry(id, fields),
         remove: (id: string) => LivingAppsService.deleteMaterialverwaltungEntry(id),
-      };
-      case 'auftragsverwaltung': return {
-        create: (fields: any) => LivingAppsService.createAuftragsverwaltungEntry(fields),
-        update: (id: string, fields: any) => LivingAppsService.updateAuftragsverwaltungEntry(id, fields),
-        remove: (id: string) => LivingAppsService.deleteAuftragsverwaltungEntry(id),
-      };
-      case 'rechnungsverwaltung': return {
-        create: (fields: any) => LivingAppsService.createRechnungsverwaltungEntry(fields),
-        update: (id: string, fields: any) => LivingAppsService.updateRechnungsverwaltungEntry(id, fields),
-        remove: (id: string) => LivingAppsService.deleteRechnungsverwaltungEntry(id),
       };
       default: return null;
     }
@@ -623,10 +623,23 @@ export default function AdminPage() {
                   if (fm.type === 'lookup/select' || fm.type === 'lookup/radio') {
                     return <TableCell key={fm.key}><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{val?.label ?? '—'}</span></TableCell>;
                   }
-                  if (fm.type.includes('multiplelookup')) {
+                  if (fm.type.startsWith('multiplelookup')) {
                     return <TableCell key={fm.key}>{Array.isArray(val) ? val.map((v: any) => v?.label ?? v).join(', ') : '—'}</TableCell>;
                   }
-                  if (fm.type.includes('applookup')) {
+                  if (fm.type.startsWith('multipleapplookup')) {
+                    return (
+                      <TableCell key={fm.key}>
+                        {Array.isArray(val) && val.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {val.map((url: any, i: number) => (
+                              <span key={i} className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getApplookupDisplay(activeTab, fm.key, url)}</span>
+                            ))}
+                          </div>
+                        ) : '—'}
+                      </TableCell>
+                    );
+                  }
+                  if (fm.type.startsWith('applookup')) {
                     return <TableCell key={fm.key}><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getApplookupDisplay(activeTab, fm.key, val)}</span></TableCell>;
                   }
                   if (fm.type.includes('date')) {
@@ -680,14 +693,30 @@ export default function AdminPage() {
         </Table>
       </div>
 
-      {(createEntity === 'mitarbeiterverwaltung' || dialogState?.entity === 'mitarbeiterverwaltung') && (
-        <MitarbeiterverwaltungDialog
-          open={createEntity === 'mitarbeiterverwaltung' || dialogState?.entity === 'mitarbeiterverwaltung'}
+      {(createEntity === 'rechnungsverwaltung' || dialogState?.entity === 'rechnungsverwaltung') && (
+        <RechnungsverwaltungDialog
+          open={createEntity === 'rechnungsverwaltung' || dialogState?.entity === 'rechnungsverwaltung'}
           onClose={() => { setCreateEntity(null); setDialogState(null); }}
-          onSubmit={dialogState?.entity === 'mitarbeiterverwaltung' ? handleUpdate : (fields: any) => handleCreate('mitarbeiterverwaltung', fields)}
-          defaultValues={dialogState?.entity === 'mitarbeiterverwaltung' ? dialogState.record?.fields : undefined}
-          enablePhotoScan={AI_PHOTO_SCAN['Mitarbeiterverwaltung']}
-          enablePhotoLocation={AI_PHOTO_LOCATION['Mitarbeiterverwaltung']}
+          onSubmit={dialogState?.entity === 'rechnungsverwaltung' ? handleUpdate : (fields: any) => handleCreate('rechnungsverwaltung', fields)}
+          defaultValues={dialogState?.entity === 'rechnungsverwaltung' ? dialogState.record?.fields : undefined}
+          auftragsverwaltungList={(data as any).auftragsverwaltung ?? []}
+          kundenverwaltungList={(data as any).kundenverwaltung ?? []}
+          enablePhotoScan={AI_PHOTO_SCAN['Rechnungsverwaltung']}
+          enablePhotoLocation={AI_PHOTO_LOCATION['Rechnungsverwaltung']}
+        />
+      )}
+      {(createEntity === 'auftragsverwaltung' || dialogState?.entity === 'auftragsverwaltung') && (
+        <AuftragsverwaltungDialog
+          open={createEntity === 'auftragsverwaltung' || dialogState?.entity === 'auftragsverwaltung'}
+          onClose={() => { setCreateEntity(null); setDialogState(null); }}
+          onSubmit={dialogState?.entity === 'auftragsverwaltung' ? handleUpdate : (fields: any) => handleCreate('auftragsverwaltung', fields)}
+          defaultValues={dialogState?.entity === 'auftragsverwaltung' ? dialogState.record?.fields : undefined}
+          kundenverwaltungList={(data as any).kundenverwaltung ?? []}
+          mitarbeiterverwaltungList={(data as any).mitarbeiterverwaltung ?? []}
+          motivkatalogList={(data as any).motivkatalog ?? []}
+          materialverwaltungList={(data as any).materialverwaltung ?? []}
+          enablePhotoScan={AI_PHOTO_SCAN['Auftragsverwaltung']}
+          enablePhotoLocation={AI_PHOTO_LOCATION['Auftragsverwaltung']}
         />
       )}
       {(createEntity === 'kundenverwaltung' || dialogState?.entity === 'kundenverwaltung') && (
@@ -698,6 +727,16 @@ export default function AdminPage() {
           defaultValues={dialogState?.entity === 'kundenverwaltung' ? dialogState.record?.fields : undefined}
           enablePhotoScan={AI_PHOTO_SCAN['Kundenverwaltung']}
           enablePhotoLocation={AI_PHOTO_LOCATION['Kundenverwaltung']}
+        />
+      )}
+      {(createEntity === 'mitarbeiterverwaltung' || dialogState?.entity === 'mitarbeiterverwaltung') && (
+        <MitarbeiterverwaltungDialog
+          open={createEntity === 'mitarbeiterverwaltung' || dialogState?.entity === 'mitarbeiterverwaltung'}
+          onClose={() => { setCreateEntity(null); setDialogState(null); }}
+          onSubmit={dialogState?.entity === 'mitarbeiterverwaltung' ? handleUpdate : (fields: any) => handleCreate('mitarbeiterverwaltung', fields)}
+          defaultValues={dialogState?.entity === 'mitarbeiterverwaltung' ? dialogState.record?.fields : undefined}
+          enablePhotoScan={AI_PHOTO_SCAN['Mitarbeiterverwaltung']}
+          enablePhotoLocation={AI_PHOTO_LOCATION['Mitarbeiterverwaltung']}
         />
       )}
       {(createEntity === 'motivkatalog' || dialogState?.entity === 'motivkatalog') && (
@@ -720,38 +759,26 @@ export default function AdminPage() {
           enablePhotoLocation={AI_PHOTO_LOCATION['Materialverwaltung']}
         />
       )}
-      {(createEntity === 'auftragsverwaltung' || dialogState?.entity === 'auftragsverwaltung') && (
-        <AuftragsverwaltungDialog
-          open={createEntity === 'auftragsverwaltung' || dialogState?.entity === 'auftragsverwaltung'}
-          onClose={() => { setCreateEntity(null); setDialogState(null); }}
-          onSubmit={dialogState?.entity === 'auftragsverwaltung' ? handleUpdate : (fields: any) => handleCreate('auftragsverwaltung', fields)}
-          defaultValues={dialogState?.entity === 'auftragsverwaltung' ? dialogState.record?.fields : undefined}
+      {viewState?.entity === 'rechnungsverwaltung' && (
+        <RechnungsverwaltungViewDialog
+          open={viewState?.entity === 'rechnungsverwaltung'}
+          onClose={() => setViewState(null)}
+          record={viewState?.record}
+          onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'rechnungsverwaltung', record: r }); }}
+          auftragsverwaltungList={(data as any).auftragsverwaltung ?? []}
+          kundenverwaltungList={(data as any).kundenverwaltung ?? []}
+        />
+      )}
+      {viewState?.entity === 'auftragsverwaltung' && (
+        <AuftragsverwaltungViewDialog
+          open={viewState?.entity === 'auftragsverwaltung'}
+          onClose={() => setViewState(null)}
+          record={viewState?.record}
+          onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'auftragsverwaltung', record: r }); }}
           kundenverwaltungList={(data as any).kundenverwaltung ?? []}
           mitarbeiterverwaltungList={(data as any).mitarbeiterverwaltung ?? []}
           motivkatalogList={(data as any).motivkatalog ?? []}
           materialverwaltungList={(data as any).materialverwaltung ?? []}
-          enablePhotoScan={AI_PHOTO_SCAN['Auftragsverwaltung']}
-          enablePhotoLocation={AI_PHOTO_LOCATION['Auftragsverwaltung']}
-        />
-      )}
-      {(createEntity === 'rechnungsverwaltung' || dialogState?.entity === 'rechnungsverwaltung') && (
-        <RechnungsverwaltungDialog
-          open={createEntity === 'rechnungsverwaltung' || dialogState?.entity === 'rechnungsverwaltung'}
-          onClose={() => { setCreateEntity(null); setDialogState(null); }}
-          onSubmit={dialogState?.entity === 'rechnungsverwaltung' ? handleUpdate : (fields: any) => handleCreate('rechnungsverwaltung', fields)}
-          defaultValues={dialogState?.entity === 'rechnungsverwaltung' ? dialogState.record?.fields : undefined}
-          auftragsverwaltungList={(data as any).auftragsverwaltung ?? []}
-          kundenverwaltungList={(data as any).kundenverwaltung ?? []}
-          enablePhotoScan={AI_PHOTO_SCAN['Rechnungsverwaltung']}
-          enablePhotoLocation={AI_PHOTO_LOCATION['Rechnungsverwaltung']}
-        />
-      )}
-      {viewState?.entity === 'mitarbeiterverwaltung' && (
-        <MitarbeiterverwaltungViewDialog
-          open={viewState?.entity === 'mitarbeiterverwaltung'}
-          onClose={() => setViewState(null)}
-          record={viewState?.record}
-          onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'mitarbeiterverwaltung', record: r }); }}
         />
       )}
       {viewState?.entity === 'kundenverwaltung' && (
@@ -760,6 +787,14 @@ export default function AdminPage() {
           onClose={() => setViewState(null)}
           record={viewState?.record}
           onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'kundenverwaltung', record: r }); }}
+        />
+      )}
+      {viewState?.entity === 'mitarbeiterverwaltung' && (
+        <MitarbeiterverwaltungViewDialog
+          open={viewState?.entity === 'mitarbeiterverwaltung'}
+          onClose={() => setViewState(null)}
+          record={viewState?.record}
+          onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'mitarbeiterverwaltung', record: r }); }}
         />
       )}
       {viewState?.entity === 'motivkatalog' && (
@@ -776,28 +811,6 @@ export default function AdminPage() {
           onClose={() => setViewState(null)}
           record={viewState?.record}
           onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'materialverwaltung', record: r }); }}
-        />
-      )}
-      {viewState?.entity === 'auftragsverwaltung' && (
-        <AuftragsverwaltungViewDialog
-          open={viewState?.entity === 'auftragsverwaltung'}
-          onClose={() => setViewState(null)}
-          record={viewState?.record}
-          onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'auftragsverwaltung', record: r }); }}
-          kundenverwaltungList={(data as any).kundenverwaltung ?? []}
-          mitarbeiterverwaltungList={(data as any).mitarbeiterverwaltung ?? []}
-          motivkatalogList={(data as any).motivkatalog ?? []}
-          materialverwaltungList={(data as any).materialverwaltung ?? []}
-        />
-      )}
-      {viewState?.entity === 'rechnungsverwaltung' && (
-        <RechnungsverwaltungViewDialog
-          open={viewState?.entity === 'rechnungsverwaltung'}
-          onClose={() => setViewState(null)}
-          record={viewState?.record}
-          onEdit={(r: any) => { setViewState(null); setDialogState({ entity: 'rechnungsverwaltung', record: r }); }}
-          auftragsverwaltungList={(data as any).auftragsverwaltung ?? []}
-          kundenverwaltungList={(data as any).kundenverwaltung ?? []}
         />
       )}
 

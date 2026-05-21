@@ -12,6 +12,22 @@ function resolveDisplay(url: unknown, map: Map<string, any>, ...fields: string[]
   return fields.map(f => String(r.fields[f] ?? '')).join(' ').trim();
 }
 
+interface RechnungsverwaltungMaps {
+  auftragsverwaltungMap: Map<string, Auftragsverwaltung>;
+  kundenverwaltungMap: Map<string, Kundenverwaltung>;
+}
+
+export function enrichRechnungsverwaltung(
+  rechnungsverwaltung: Rechnungsverwaltung[],
+  maps: RechnungsverwaltungMaps
+): EnrichedRechnungsverwaltung[] {
+  return rechnungsverwaltung.map(r => ({
+    ...r,
+    auftragName: resolveDisplay(r.fields.auftrag, maps.auftragsverwaltungMap, 'auftragsnummer'),
+    rechnungskundeName: resolveDisplay(r.fields.rechnungskunde, maps.kundenverwaltungMap, 'kunde_vorname'),
+  }));
+}
+
 interface AuftragsverwaltungMaps {
   kundenverwaltungMap: Map<string, Kundenverwaltung>;
   mitarbeiterverwaltungMap: Map<string, Mitarbeiterverwaltung>;
@@ -29,21 +45,5 @@ export function enrichAuftragsverwaltung(
     mitarbeiterName: resolveDisplay(r.fields.mitarbeiter, maps.mitarbeiterverwaltungMap, 'vorname', 'nachname'),
     motivName: resolveDisplay(r.fields.motiv, maps.motivkatalogMap, 'motivname'),
     materialienName: resolveDisplay(r.fields.materialien, maps.materialverwaltungMap, 'materialname'),
-  }));
-}
-
-interface RechnungsverwaltungMaps {
-  auftragsverwaltungMap: Map<string, Auftragsverwaltung>;
-  kundenverwaltungMap: Map<string, Kundenverwaltung>;
-}
-
-export function enrichRechnungsverwaltung(
-  rechnungsverwaltung: Rechnungsverwaltung[],
-  maps: RechnungsverwaltungMaps
-): EnrichedRechnungsverwaltung[] {
-  return rechnungsverwaltung.map(r => ({
-    ...r,
-    auftragName: resolveDisplay(r.fields.auftrag, maps.auftragsverwaltungMap, 'auftragsnummer'),
-    rechnungskundeName: resolveDisplay(r.fields.rechnungskunde, maps.kundenverwaltungMap, 'kunde_vorname'),
   }));
 }

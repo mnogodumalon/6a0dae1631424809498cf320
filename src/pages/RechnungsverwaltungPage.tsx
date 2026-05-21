@@ -267,6 +267,7 @@ export default function RechnungsverwaltungPage() {
         onClose={() => { setDialogOpen(false); setEditingRecord(null); }}
         onSubmit={editingRecord ? handleUpdate : handleCreate}
         defaultValues={editingRecord?.fields}
+        recordId={editingRecord?.record_id}
         auftragsverwaltungList={auftragsverwaltungList}
         kundenverwaltungList={kundenverwaltungList}
         enablePhotoScan={AI_PHOTO_SCAN['Rechnungsverwaltung']}

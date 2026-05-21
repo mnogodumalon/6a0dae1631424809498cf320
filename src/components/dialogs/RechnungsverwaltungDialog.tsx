@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import type { ComputedContext } from '@/config/form-enhancements/types';
 import { applyFieldOrder, flattenFieldOrder, applyDefaults, evalComputed, numberInputProps, clampNumberValue, classifyComputed, extractApplookupRefs, mergeApplookupRefs, resolveApplookupRef } from '@/config/form-enhancements/types';
 import { formEnhancements, computedDeps, computedApplookupRefs } from '@/config/form-enhancements/Rechnungsverwaltung';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/Combobox';
 import { AuftragsverwaltungDialog } from '@/components/dialogs/AuftragsverwaltungDialog';
@@ -27,15 +28,28 @@ interface RechnungsverwaltungDialogProps {
   onClose: () => void;
   onSubmit: (fields: Rechnungsverwaltung['fields']) => Promise<void>;
   defaultValues?: Rechnungsverwaltung['fields'];
+  /** Record id when editing — enables the attachments section. Omit on create. */
+  recordId?: string;
   auftragsverwaltungList: Auftragsverwaltung[];
   kundenverwaltungList: Kundenverwaltung[];
   enablePhotoScan?: boolean;
   enablePhotoLocation?: boolean;
 }
 
-export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValues, auftragsverwaltungList, kundenverwaltungList, enablePhotoScan = true, enablePhotoLocation = true }: RechnungsverwaltungDialogProps) {
+export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValues, recordId, auftragsverwaltungList, kundenverwaltungList, enablePhotoScan = true, enablePhotoLocation = true }: RechnungsverwaltungDialogProps) {
   const [fields, setFields] = useState<Partial<Rechnungsverwaltung['fields']>>({});
   const [saving, setSaving] = useState(false);
+  // Dirty-tracking: in edit-mode the Speichern button is disabled until the
+  // user actually changes something. JSON.stringify is good enough for our
+  // fields (plain values + LookupValue objects + string arrays).
+  const isDirty = useMemo(() => {
+    if (!defaultValues) return true;  // create-mode: always allow submit
+    try {
+      return JSON.stringify(fields) !== JSON.stringify(defaultValues);
+    } catch {
+      return true;
+    }
+  }, [fields, defaultValues]);
   // Inline-Create state for "Auftragsverwaltung" target. The dropdown's
   // "+ Neuer …" option opens a sub-dialog; on submit we POST, add the new
   // record to the local `extraAuftragsverwaltung` list, and select it in
@@ -208,7 +222,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         }
       }
       const photoContext = contextParts.length ? contextParts.join('\n') : undefined;
-      const schema = `{\n  "rechnungsnummer": string | null, // Rechnungsnummer\n  "rechnungsdatum": string | null, // YYYY-MM-DD\n  "faelligkeitsdatum": string | null, // YYYY-MM-DD\n  "auftrag": string | null, // Display name from Auftragsverwaltung (see <available-records>)\n  "rechnungskunde": string | null, // Display name from Kundenverwaltung (see <available-records>)\n  "nettobetrag": number | null, // Nettobetrag (€)\n  "mehrwertsteuersatz": LookupValue | null, // Mehrwertsteuersatz (select one key: "mwst_19" | "mwst_7" | "mwst_0") mapping: mwst_19=19 %, mwst_7=7 %, mwst_0=0 % (steuerfrei)\n  "gesamtbetrag": number | null, // Gesamtbetrag brutto (€)\n  "zahlungsart": LookupValue | null, // Zahlungsart (select one key: "ueberweisung" | "lastschrift" | "bar" | "paypal" | "kreditkarte") mapping: ueberweisung=Überweisung, lastschrift=Lastschrift, bar=Bar, paypal=PayPal, kreditkarte=Kreditkarte\n  "zahlungsstatus": LookupValue | null, // Zahlungsstatus (select one key: "offen" | "teilweise_bezahlt" | "bezahlt" | "ueberfaellig" | "storniert_rechnung") mapping: offen=Offen, teilweise_bezahlt=Teilweise bezahlt, bezahlt=Bezahlt, ueberfaellig=Überfällig, storniert_rechnung=Storniert\n  "rechnungsnotiz": string | null, // Notiz auf der Rechnung\n}`;
+      const schema = `{\n  "rechnungsnummer": string | null, // Rechnungsnummer\n  "rechnungsdatum": string | null, // YYYY-MM-DD\n  "faelligkeitsdatum": string | null, // YYYY-MM-DD\n  "auftrag": string | null, // Display name from Auftragsverwaltung (see <available-records>)\n  "rechnungskunde": string | null, // Display name from Kundenverwaltung (see <available-records>)\n  "nettobetrag": number | null, // Nettobetrag (€)\n  "mehrwertsteuersatz": LookupValue | null, // Mehrwertsteuersatz (select one key: "mwst_7" | "mwst_0" | "mwst_19") mapping: mwst_7=7 %, mwst_0=0 % (steuerfrei), mwst_19=19 %\n  "gesamtbetrag": number | null, // Gesamtbetrag brutto (€)\n  "zahlungsart": LookupValue | null, // Zahlungsart (select one key: "ueberweisung" | "lastschrift" | "bar" | "paypal" | "kreditkarte") mapping: ueberweisung=Überweisung, lastschrift=Lastschrift, bar=Bar, paypal=PayPal, kreditkarte=Kreditkarte\n  "zahlungsstatus": LookupValue | null, // Zahlungsstatus (select one key: "offen" | "teilweise_bezahlt" | "bezahlt" | "ueberfaellig" | "storniert_rechnung") mapping: offen=Offen, teilweise_bezahlt=Teilweise bezahlt, bezahlt=Bezahlt, ueberfaellig=Überfällig, storniert_rechnung=Storniert\n  "rechnungsnotiz": string | null, // Notiz auf der Rechnung\n}`;
       const raw = await extractFromInput<Record<string, unknown>>(schema, {
         dataUri: uri,
         userText: aiText.trim() || undefined,
@@ -295,7 +309,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         <Label htmlFor="rechnungsnummer">Rechnungsnummer</Label>
         <Input
           id="rechnungsnummer"
-          placeholder="z. B. RG-2026-0042"
+          placeholder=""
           value={fields.rechnungsnummer ?? ''}
           onChange={e => setFields(f => ({ ...f, rechnungsnummer: e.target.value }))}
         />
@@ -306,7 +320,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         <Label htmlFor="rechnungsdatum">Rechnungsdatum</Label>
         <DatePicker
           id="rechnungsdatum"
-          placeholder="Wann wurde die Rechnung ausgestellt?"
+          placeholder=""
           mode="date"
           value={fields.rechnungsdatum ?? null}
           onChange={v => setFields(f => ({ ...f, rechnungsdatum: v ?? undefined }))}
@@ -318,7 +332,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         <Label htmlFor="faelligkeitsdatum">Fälligkeitsdatum</Label>
         <DatePicker
           id="faelligkeitsdatum"
-          placeholder="Zahlbar bis wann?"
+          placeholder=""
           mode="date"
           value={fields.faelligkeitsdatum ?? null}
           onChange={v => setFields(f => ({ ...f, faelligkeitsdatum: v ?? undefined }))}
@@ -330,7 +344,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         <Label htmlFor="auftrag">Zugehöriger Auftrag</Label>
         <Combobox
           id="auftrag"
-          placeholder="Auftrag zuordnen"
+          placeholder=""
           items={auftragsverwaltungListAll.map(r => ({
             id: r.record_id,
             label: String(r.fields.auftragsnummer ?? r.record_id),
@@ -349,7 +363,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         <Label htmlFor="rechnungskunde">Rechnungsempfänger</Label>
         <Combobox
           id="rechnungskunde"
-          placeholder="Rechnungsempfänger wählen"
+          placeholder=""
           items={kundenverwaltungListAll.map(r => ({
             id: r.record_id,
             label: String(r.fields.kunde_vorname ?? r.record_id),
@@ -371,7 +385,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'nettobetrag')}
-          placeholder="z. B. 1250,00"
+          placeholder=""
           value={fields.nettobetrag !== undefined ? fields.nettobetrag : (computedValues['nettobetrag'] ?? '')}
           onChange={e => setFields(f => ({ ...f, nettobetrag: clampNumberValue(formEnhancements, 'nettobetrag', e.target.value) }))}
         />
@@ -381,19 +395,6 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
       <div key="mehrwertsteuersatz" className="space-y-1.5">
         <Label htmlFor="mehrwertsteuersatz">Mehrwertsteuersatz</Label>
         <div role="radiogroup" className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'}
-            onClick={() => setFields(f => ({ ...f, mehrwertsteuersatz: (lookupKey(f.mehrwertsteuersatz) === 'mwst_19' ? undefined : 'mwst_19') as any }))}
-            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-              lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'
-                ? 'bg-foreground text-background border-foreground'
-                : 'bg-background text-foreground border-input hover:bg-accent'
-            }`}
-          >
-            19 %
-          </button>
           <button
             type="button"
             role="radio"
@@ -420,6 +421,19 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
           >
             0 % (steuerfrei)
           </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'}
+            onClick={() => setFields(f => ({ ...f, mehrwertsteuersatz: (lookupKey(f.mehrwertsteuersatz) === 'mwst_19' ? undefined : 'mwst_19') as any }))}
+            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              lookupKey(fields.mehrwertsteuersatz) === 'mwst_19'
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-background text-foreground border-input hover:bg-accent'
+            }`}
+          >
+            19 %
+          </button>
         </div>
       </div>
     ),
@@ -431,7 +445,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'gesamtbetrag')}
-          placeholder="wird automatisch berechnet"
+          placeholder=""
           value={fields.gesamtbetrag !== undefined ? fields.gesamtbetrag : (computedValues['gesamtbetrag'] ?? '')}
           onChange={e => setFields(f => ({ ...f, gesamtbetrag: clampNumberValue(formEnhancements, 'gesamtbetrag', e.target.value) }))}
         />
@@ -586,7 +600,7 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
         <Label htmlFor="rechnungsnotiz">Notiz auf der Rechnung</Label>
         <Textarea
           id="rechnungsnotiz"
-          placeholder="Zahlungsbedingungen, Dank..."
+          placeholder=""
           value={fields.rechnungsnotiz ?? ''}
           onChange={e => setFields(f => ({ ...f, rechnungsnotiz: e.target.value }))}
           rows={3}
@@ -1017,12 +1031,17 @@ export function RechnungsverwaltungDialog({ open, onClose, onSubmit, defaultValu
                 })()}
               </div>
             )}
+            {recordId && (
+              <div className="pt-2 border-t border-border">
+                <AttachmentsSection appId={APP_IDS.RECHNUNGSVERWALTUNG} recordId={recordId} />
+              </div>
+            )}
           </div>
           <DialogFooter className="sticky bottom-0 border-t bg-background/95 backdrop-blur px-6 py-3 gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
             <Button
               type="submit"
-              disabled={saving}
+              disabled={saving || !isDirty}
             >
               {saving ? 'Speichern...' : defaultValues ? 'Speichern' : 'Erstellen'}
             </Button>

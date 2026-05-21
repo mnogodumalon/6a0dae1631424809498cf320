@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import type { ComputedContext } from '@/config/form-enhancements/types';
 import { applyFieldOrder, flattenFieldOrder, applyDefaults, evalComputed, numberInputProps, clampNumberValue, classifyComputed, extractApplookupRefs, mergeApplookupRefs, resolveApplookupRef } from '@/config/form-enhancements/types';
 import { formEnhancements, computedDeps, computedApplookupRefs } from '@/config/form-enhancements/Auftragsverwaltung';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select, SelectContent, SelectItem,
@@ -33,6 +34,8 @@ interface AuftragsverwaltungDialogProps {
   onClose: () => void;
   onSubmit: (fields: Auftragsverwaltung['fields']) => Promise<void>;
   defaultValues?: Auftragsverwaltung['fields'];
+  /** Record id when editing — enables the attachments section. Omit on create. */
+  recordId?: string;
   kundenverwaltungList: Kundenverwaltung[];
   mitarbeiterverwaltungList: Mitarbeiterverwaltung[];
   motivkatalogList: Motivkatalog[];
@@ -41,9 +44,20 @@ interface AuftragsverwaltungDialogProps {
   enablePhotoLocation?: boolean;
 }
 
-export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValues, kundenverwaltungList, mitarbeiterverwaltungList, motivkatalogList, materialverwaltungList, enablePhotoScan = true, enablePhotoLocation = true }: AuftragsverwaltungDialogProps) {
+export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValues, recordId, kundenverwaltungList, mitarbeiterverwaltungList, motivkatalogList, materialverwaltungList, enablePhotoScan = true, enablePhotoLocation = true }: AuftragsverwaltungDialogProps) {
   const [fields, setFields] = useState<Partial<Auftragsverwaltung['fields']>>({});
   const [saving, setSaving] = useState(false);
+  // Dirty-tracking: in edit-mode the Speichern button is disabled until the
+  // user actually changes something. JSON.stringify is good enough for our
+  // fields (plain values + LookupValue objects + string arrays).
+  const isDirty = useMemo(() => {
+    if (!defaultValues) return true;  // create-mode: always allow submit
+    try {
+      return JSON.stringify(fields) !== JSON.stringify(defaultValues);
+    } catch {
+      return true;
+    }
+  }, [fields, defaultValues]);
   // Inline-Create state for "Kundenverwaltung" target. The dropdown's
   // "+ Neuer …" option opens a sub-dialog; on submit we POST, add the new
   // record to the local `extraKundenverwaltung` list, and select it in
@@ -341,7 +355,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="auftragsnummer">Auftragsnummer</Label>
         <Input
           id="auftragsnummer"
-          placeholder="z. B. AU-2026-0042"
+          placeholder=""
           value={fields.auftragsnummer ?? ''}
           onChange={e => setFields(f => ({ ...f, auftragsnummer: e.target.value }))}
         />
@@ -352,7 +366,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="auftragsdatum">Auftragsdatum</Label>
         <DatePicker
           id="auftragsdatum"
-          placeholder="Wann wurde der Auftrag aufgegeben?"
+          placeholder=""
           mode="date"
           value={fields.auftragsdatum ?? null}
           onChange={v => setFields(f => ({ ...f, auftragsdatum: v ?? undefined }))}
@@ -366,7 +380,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
           value={lookupKey(fields.status) ?? ''}
           onValueChange={v => setFields(f => ({ ...f, status: v === 'none' ? undefined : v as any }))}
         >
-          <SelectTrigger id="status"><SelectValue placeholder="Aktuellen Status wählen" /></SelectTrigger>
+          <SelectTrigger id="status"><SelectValue placeholder="" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="none">—</SelectItem>
             <SelectItem value="neu">Neu</SelectItem>
@@ -385,7 +399,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="kunde">Kunde</Label>
         <Combobox
           id="kunde"
-          placeholder="Kunden wählen"
+          placeholder=""
           items={kundenverwaltungListAll.map(r => ({
             id: r.record_id,
             label: String(r.fields.kunde_vorname ?? r.record_id),
@@ -404,7 +418,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="mitarbeiter">Zuständiger Mitarbeiter</Label>
         <Combobox
           id="mitarbeiter"
-          placeholder="Zuständigen Mitarbeiter wählen"
+          placeholder=""
           items={mitarbeiterverwaltungListAll.map(r => ({
             id: r.record_id,
             label: String(r.fields.nachname ?? r.record_id),
@@ -423,7 +437,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="motiv">Druckmotiv</Label>
         <Combobox
           id="motiv"
-          placeholder="Druckmotiv aus Katalog wählen"
+          placeholder=""
           items={motivkatalogListAll.map(r => ({
             id: r.record_id,
             label: String(r.fields.motivname ?? r.record_id),
@@ -445,7 +459,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'druckbreite_cm')}
-          placeholder="z. B. 100"
+          placeholder=""
           value={fields.druckbreite_cm !== undefined ? fields.druckbreite_cm : (computedValues['druckbreite_cm'] ?? '')}
           onChange={e => setFields(f => ({ ...f, druckbreite_cm: clampNumberValue(formEnhancements, 'druckbreite_cm', e.target.value) }))}
         />
@@ -459,7 +473,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
           type="number"
           step="any"
           {...numberInputProps(formEnhancements, 'druckhoehe_cm')}
-          placeholder="z. B. 75"
+          placeholder=""
           value={fields.druckhoehe_cm !== undefined ? fields.druckhoehe_cm : (computedValues['druckhoehe_cm'] ?? '')}
           onChange={e => setFields(f => ({ ...f, druckhoehe_cm: clampNumberValue(formEnhancements, 'druckhoehe_cm', e.target.value) }))}
         />
@@ -470,7 +484,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="materialien">Verwendete Materialien</Label>
         <MultiCombobox
           id="materialien"
-          placeholder="Verwendete Materialien wählen"
+          placeholder=""
           items={materialverwaltungListAll.map(r => ({
             id: r.record_id,
             label: String(r.fields.materialname ?? r.record_id),
@@ -489,7 +503,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="wunschtermin">Wunschtermin</Label>
         <DatePicker
           id="wunschtermin"
-          placeholder="Gewünschtes Fertigdatum?"
+          placeholder=""
           mode="date"
           value={fields.wunschtermin ?? null}
           onChange={v => setFields(f => ({ ...f, wunschtermin: v ?? undefined }))}
@@ -547,7 +561,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="liefer_strasse">Lieferstraße</Label>
         <Input
           id="liefer_strasse"
-          placeholder="z. B. Poststraße"
+          placeholder=""
           value={fields.liefer_strasse ?? ''}
           onChange={e => setFields(f => ({ ...f, liefer_strasse: e.target.value }))}
         />
@@ -558,7 +572,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="liefer_hausnummer">Lieferhausnummer</Label>
         <Input
           id="liefer_hausnummer"
-          placeholder="z. B. 15"
+          placeholder=""
           value={fields.liefer_hausnummer ?? ''}
           onChange={e => setFields(f => ({ ...f, liefer_hausnummer: e.target.value }))}
         />
@@ -569,7 +583,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="liefer_plz">Liefer-PLZ</Label>
         <Input
           id="liefer_plz"
-          placeholder="z. B. 10115"
+          placeholder=""
           value={fields.liefer_plz ?? ''}
           onChange={e => setFields(f => ({ ...f, liefer_plz: e.target.value }))}
         />
@@ -580,7 +594,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="liefer_ort">Lieferort</Label>
         <Input
           id="liefer_ort"
-          placeholder="z. B. Berlin"
+          placeholder=""
           value={fields.liefer_ort ?? ''}
           onChange={e => setFields(f => ({ ...f, liefer_ort: e.target.value }))}
         />
@@ -591,7 +605,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="sonderanforderungen">Sonderanforderungen</Label>
         <Textarea
           id="sonderanforderungen"
-          placeholder="Rahmen, Veredelung, Montage..."
+          placeholder=""
           value={fields.sonderanforderungen ?? ''}
           onChange={e => setFields(f => ({ ...f, sonderanforderungen: e.target.value }))}
           rows={3}
@@ -603,7 +617,7 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
         <Label htmlFor="interne_notizen">Interne Notizen</Label>
         <Textarea
           id="interne_notizen"
-          placeholder="Für das Team, nicht auf Rechnung..."
+          placeholder=""
           value={fields.interne_notizen ?? ''}
           onChange={e => setFields(f => ({ ...f, interne_notizen: e.target.value }))}
           rows={3}
@@ -964,12 +978,17 @@ export function AuftragsverwaltungDialog({ open, onClose, onSubmit, defaultValue
                 })()}
               </div>
             )}
+            {recordId && (
+              <div className="pt-2 border-t border-border">
+                <AttachmentsSection appId={APP_IDS.AUFTRAGSVERWALTUNG} recordId={recordId} />
+              </div>
+            )}
           </div>
           <DialogFooter className="sticky bottom-0 border-t bg-background/95 backdrop-blur px-6 py-3 gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
             <Button
               type="submit"
-              disabled={saving}
+              disabled={saving || !isDirty}
             >
               {saving ? 'Speichern...' : defaultValues ? 'Speichern' : 'Erstellen'}
             </Button>

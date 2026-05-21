@@ -5,11 +5,8 @@
 import type { FormEnhancements } from './types';
 
 export const formEnhancements: FormEnhancements = {
-  fieldOrder: ['materialname', 'materialtyp', 'einheit', 'preis_pro_einheit', { row: ['aktueller_bestand', 'mindestbestand'] }, 'lieferant', 'notizen_material'],
-  defaults: {
-    'aktueller_bestand': { kind: 'literal', value: 0 },
-    'mindestbestand': { kind: 'literal', value: 0 },
-  },
+  fieldOrder: null,
+  defaults: {},
   computed: {},
 };
 

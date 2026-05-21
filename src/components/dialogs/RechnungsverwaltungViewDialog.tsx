@@ -6,6 +6,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { APP_IDS } from '@/types/app';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
 import { Badge } from '@/components/ui/badge';
 import { IconPencil, IconFileText } from '@tabler/icons-react';
 import { format, parseISO } from 'date-fns';
@@ -105,6 +107,9 @@ export function RechnungsverwaltungViewDialog({ open, onClose, record, onEdit, a
                 <img src={record.fields.rechnungsdokument} alt="" className="w-full h-auto object-contain" />
               </div>
             ) : <p className="text-sm text-muted-foreground">—</p>}
+          </div>
+          <div className="pt-2 border-t border-border">
+            <AttachmentsSection appId={APP_IDS.RECHNUNGSVERWALTUNG} recordId={record.record_id} readOnly />
           </div>
         </div>
       </DialogContent>

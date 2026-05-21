@@ -5,7 +5,7 @@
 import type { FormEnhancements } from './types';
 
 export const formEnhancements: FormEnhancements = {
-  fieldOrder: [{ row: ['kunde_vorname', 'kunde_nachname'] }, 'firmenname', 'kunde_email', 'kunde_telefon', { row: ['strasse', 'hausnummer'], cols: '2fr 1fr' }, { row: ['plz', 'ort'], cols: '1fr 2fr' }, 'kundenkategorie', 'notizen_kunde'],
+  fieldOrder: [{"row": ["kunde_vorname", "kunde_nachname"]}, "firmenname", "kunde_email", "kunde_telefon", {"row": ["strasse", "hausnummer"], "cols": "2fr 1fr"}, {"row": ["plz", "ort"], "cols": "1fr 2fr"}, "kundenkategorie", "notizen_kunde"],
   defaults: {},
   computed: {},
 };

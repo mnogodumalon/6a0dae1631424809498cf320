@@ -305,6 +305,7 @@ export default function DashboardOverview() {
           fetchAll();
         }}
         defaultValues={auftragDialog.record?.fields}
+        recordId={auftragDialog.record?.record_id}
         kundenverwaltungList={kundenverwaltung}
         mitarbeiterverwaltungList={mitarbeiterverwaltung}
         motivkatalogList={motivkatalog}
@@ -325,6 +326,7 @@ export default function DashboardOverview() {
           fetchAll();
         }}
         defaultValues={rechnungDialog.record?.fields}
+        recordId={rechnungDialog.record?.record_id}
         auftragsverwaltungList={auftragsverwaltung}
         kundenverwaltungList={kundenverwaltung}
         enablePhotoScan={AI_PHOTO_SCAN['Rechnungsverwaltung']}

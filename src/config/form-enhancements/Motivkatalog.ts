@@ -5,10 +5,8 @@
 import type { FormEnhancements } from './types';
 
 export const formEnhancements: FormEnhancements = {
-  fieldOrder: ['motivname', 'kategorie', { row: ['standardbreite_cm', 'standardhoehe_cm'] }, 'preis_pro_qm', 'motiv_aktiv', 'motiv_beschreibung'],
-  defaults: {
-    'motiv_aktiv': { kind: 'literal', value: true },
-  },
+  fieldOrder: null,
+  defaults: {},
   computed: {},
 };
 

@@ -283,7 +283,7 @@ export default function AuftragsverwaltungPage() {
                 <TableCell><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getMotivkatalogDisplayName(record.fields.motiv)}</span></TableCell>
                 <TableCell>{record.fields.druckbreite_cm ?? '—'}</TableCell>
                 <TableCell>{record.fields.druckhoehe_cm ?? '—'}</TableCell>
-                <TableCell><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getMaterialverwaltungDisplayName(record.fields.materialien)}</span></TableCell>
+                <TableCell>{Array.isArray(record.fields.materialien) && record.fields.materialien.length > 0 ? <div className="flex flex-wrap gap-1">{record.fields.materialien.map((url: any, i: number) => <span key={i} className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{getMaterialverwaltungDisplayName(url)}</span>)}</div> : '—'}</TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(record.fields.wunschtermin)}</TableCell>
                 <TableCell><span className="inline-flex items-center bg-secondary border border-[#bfdbfe] text-[#2563eb] rounded-[10px] px-2 py-1 text-sm font-medium">{record.fields.lieferart?.label ?? '—'}</span></TableCell>
                 <TableCell>{record.fields.liefer_strasse ?? '—'}</TableCell>
@@ -320,6 +320,7 @@ export default function AuftragsverwaltungPage() {
         onClose={() => { setDialogOpen(false); setEditingRecord(null); }}
         onSubmit={editingRecord ? handleUpdate : handleCreate}
         defaultValues={editingRecord?.fields}
+        recordId={editingRecord?.record_id}
         kundenverwaltungList={kundenverwaltungList}
         mitarbeiterverwaltungList={mitarbeiterverwaltungList}
         motivkatalogList={motivkatalogList}

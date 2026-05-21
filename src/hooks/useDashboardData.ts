@@ -1,34 +1,34 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Mitarbeiterverwaltung, Kundenverwaltung, Motivkatalog, Materialverwaltung, Auftragsverwaltung, Rechnungsverwaltung } from '@/types/app';
+import type { Rechnungsverwaltung, Auftragsverwaltung, Kundenverwaltung, Mitarbeiterverwaltung, Motivkatalog, Materialverwaltung } from '@/types/app';
 import { LivingAppsService } from '@/services/livingAppsService';
 
 export function useDashboardData() {
-  const [mitarbeiterverwaltung, setMitarbeiterverwaltung] = useState<Mitarbeiterverwaltung[]>([]);
+  const [rechnungsverwaltung, setRechnungsverwaltung] = useState<Rechnungsverwaltung[]>([]);
+  const [auftragsverwaltung, setAuftragsverwaltung] = useState<Auftragsverwaltung[]>([]);
   const [kundenverwaltung, setKundenverwaltung] = useState<Kundenverwaltung[]>([]);
+  const [mitarbeiterverwaltung, setMitarbeiterverwaltung] = useState<Mitarbeiterverwaltung[]>([]);
   const [motivkatalog, setMotivkatalog] = useState<Motivkatalog[]>([]);
   const [materialverwaltung, setMaterialverwaltung] = useState<Materialverwaltung[]>([]);
-  const [auftragsverwaltung, setAuftragsverwaltung] = useState<Auftragsverwaltung[]>([]);
-  const [rechnungsverwaltung, setRechnungsverwaltung] = useState<Rechnungsverwaltung[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchAll = useCallback(async () => {
     setError(null);
     try {
-      const [mitarbeiterverwaltungData, kundenverwaltungData, motivkatalogData, materialverwaltungData, auftragsverwaltungData, rechnungsverwaltungData] = await Promise.all([
-        LivingAppsService.getMitarbeiterverwaltung(),
+      const [rechnungsverwaltungData, auftragsverwaltungData, kundenverwaltungData, mitarbeiterverwaltungData, motivkatalogData, materialverwaltungData] = await Promise.all([
+        LivingAppsService.getRechnungsverwaltung(),
+        LivingAppsService.getAuftragsverwaltung(),
         LivingAppsService.getKundenverwaltung(),
+        LivingAppsService.getMitarbeiterverwaltung(),
         LivingAppsService.getMotivkatalog(),
         LivingAppsService.getMaterialverwaltung(),
-        LivingAppsService.getAuftragsverwaltung(),
-        LivingAppsService.getRechnungsverwaltung(),
       ]);
-      setMitarbeiterverwaltung(mitarbeiterverwaltungData);
+      setRechnungsverwaltung(rechnungsverwaltungData);
+      setAuftragsverwaltung(auftragsverwaltungData);
       setKundenverwaltung(kundenverwaltungData);
+      setMitarbeiterverwaltung(mitarbeiterverwaltungData);
       setMotivkatalog(motivkatalogData);
       setMaterialverwaltung(materialverwaltungData);
-      setAuftragsverwaltung(auftragsverwaltungData);
-      setRechnungsverwaltung(rechnungsverwaltungData);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Fehler beim Laden der Daten'));
     } finally {
@@ -42,20 +42,20 @@ export function useDashboardData() {
   useEffect(() => {
     async function silentRefresh() {
       try {
-        const [mitarbeiterverwaltungData, kundenverwaltungData, motivkatalogData, materialverwaltungData, auftragsverwaltungData, rechnungsverwaltungData] = await Promise.all([
-          LivingAppsService.getMitarbeiterverwaltung(),
+        const [rechnungsverwaltungData, auftragsverwaltungData, kundenverwaltungData, mitarbeiterverwaltungData, motivkatalogData, materialverwaltungData] = await Promise.all([
+          LivingAppsService.getRechnungsverwaltung(),
+          LivingAppsService.getAuftragsverwaltung(),
           LivingAppsService.getKundenverwaltung(),
+          LivingAppsService.getMitarbeiterverwaltung(),
           LivingAppsService.getMotivkatalog(),
           LivingAppsService.getMaterialverwaltung(),
-          LivingAppsService.getAuftragsverwaltung(),
-          LivingAppsService.getRechnungsverwaltung(),
         ]);
-        setMitarbeiterverwaltung(mitarbeiterverwaltungData);
+        setRechnungsverwaltung(rechnungsverwaltungData);
+        setAuftragsverwaltung(auftragsverwaltungData);
         setKundenverwaltung(kundenverwaltungData);
+        setMitarbeiterverwaltung(mitarbeiterverwaltungData);
         setMotivkatalog(motivkatalogData);
         setMaterialverwaltung(materialverwaltungData);
-        setAuftragsverwaltung(auftragsverwaltungData);
-        setRechnungsverwaltung(rechnungsverwaltungData);
       } catch {
         // silently ignore — stale data is better than no data
       }
@@ -65,17 +65,23 @@ export function useDashboardData() {
     return () => window.removeEventListener('dashboard-refresh', handleRefresh);
   }, []);
 
-  const mitarbeiterverwaltungMap = useMemo(() => {
-    const m = new Map<string, Mitarbeiterverwaltung>();
-    mitarbeiterverwaltung.forEach(r => m.set(r.record_id, r));
+  const auftragsverwaltungMap = useMemo(() => {
+    const m = new Map<string, Auftragsverwaltung>();
+    auftragsverwaltung.forEach(r => m.set(r.record_id, r));
     return m;
-  }, [mitarbeiterverwaltung]);
+  }, [auftragsverwaltung]);
 
   const kundenverwaltungMap = useMemo(() => {
     const m = new Map<string, Kundenverwaltung>();
     kundenverwaltung.forEach(r => m.set(r.record_id, r));
     return m;
   }, [kundenverwaltung]);
+
+  const mitarbeiterverwaltungMap = useMemo(() => {
+    const m = new Map<string, Mitarbeiterverwaltung>();
+    mitarbeiterverwaltung.forEach(r => m.set(r.record_id, r));
+    return m;
+  }, [mitarbeiterverwaltung]);
 
   const motivkatalogMap = useMemo(() => {
     const m = new Map<string, Motivkatalog>();
@@ -89,11 +95,5 @@ export function useDashboardData() {
     return m;
   }, [materialverwaltung]);
 
-  const auftragsverwaltungMap = useMemo(() => {
-    const m = new Map<string, Auftragsverwaltung>();
-    auftragsverwaltung.forEach(r => m.set(r.record_id, r));
-    return m;
-  }, [auftragsverwaltung]);
-
-  return { mitarbeiterverwaltung, setMitarbeiterverwaltung, kundenverwaltung, setKundenverwaltung, motivkatalog, setMotivkatalog, materialverwaltung, setMaterialverwaltung, auftragsverwaltung, setAuftragsverwaltung, rechnungsverwaltung, setRechnungsverwaltung, loading, error, fetchAll, mitarbeiterverwaltungMap, kundenverwaltungMap, motivkatalogMap, materialverwaltungMap, auftragsverwaltungMap };
+  return { rechnungsverwaltung, setRechnungsverwaltung, auftragsverwaltung, setAuftragsverwaltung, kundenverwaltung, setKundenverwaltung, mitarbeiterverwaltung, setMitarbeiterverwaltung, motivkatalog, setMotivkatalog, materialverwaltung, setMaterialverwaltung, loading, error, fetchAll, auftragsverwaltungMap, kundenverwaltungMap, mitarbeiterverwaltungMap, motivkatalogMap, materialverwaltungMap };
 }

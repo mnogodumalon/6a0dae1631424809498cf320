@@ -5,27 +5,9 @@
 import type { FormEnhancements } from './types';
 
 export const formEnhancements: FormEnhancements = {
-  fieldOrder: ['rechnungsnummer', { row: ['rechnungsdatum', 'faelligkeitsdatum'] }, 'auftrag', 'rechnungskunde', 'nettobetrag', 'mehrwertsteuersatz', 'gesamtbetrag', 'zahlungsart', 'zahlungsstatus', 'rechnungsnotiz'],
-  defaults: {
-    'rechnungsdatum': { kind: 'today' },
-    'faelligkeitsdatum': { kind: 'todayOffset', days: 14 },
-    'mehrwertsteuersatz': { kind: 'lookup', key: 'mwst_19', label: '19 %' },
-    'zahlungsstatus': { kind: 'lookup', key: 'offen', label: 'Offen' },
-  },
-  computed: {
-    'mwst_betrag': (fields, ctx) => {
-      const netto = Number(fields.nettobetrag ?? 0);
-      const satzKey = ctx.lookupKey('mehrwertsteuersatz');
-      const satz = satzKey === 'mwst_19' ? 0.19 : satzKey === 'mwst_7' ? 0.07 : 0;
-      return netto * satz;
-    },
-    'gesamtbetrag': (fields, ctx) => {
-      const netto = Number(fields.nettobetrag ?? 0);
-      const satzKey = ctx.lookupKey('mehrwertsteuersatz');
-      const satz = satzKey === 'mwst_19' ? 0.19 : satzKey === 'mwst_7' ? 0.07 : 0;
-      return netto + netto * satz;
-    },
-  },
+  fieldOrder: null,
+  defaults: {},
+  computed: {},
 };
 
 // Build-time-populated field dependencies for MODUS-2 arrow functions in
@@ -33,10 +15,7 @@ export const formEnhancements: FormEnhancements = {
 // fills it after Step 0 by regex-extracting ctx.* calls from each function
 // body. The dialog feeds these into classifyComputed so MODUS-2 entries get
 // inline anchors instead of always landing in the aggregate section.
-export const computedDeps: Record<string, string[]> = {
-  'mwst_betrag': ['mehrwertsteuersatz'],
-  'gesamtbetrag': ['mehrwertsteuersatz'],
-};
+export const computedDeps: Record<string, string[]> = {};
 
 // Build-time-populated applookup (ownKey → lookupKey) pairs found in MODUS-2
 // arrow functions. Filled by scripts/parse-formulas.mjs from regex matches
